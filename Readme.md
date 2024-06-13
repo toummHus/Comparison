@@ -1,4 +1,5 @@
-# Comparison
+# Rebuttasl
+The training and inference codes of LatentHSI.
 The comparison between LatentHSI, PLRDiff and HIRDiff.
 
 ## 1 LatentHSI
