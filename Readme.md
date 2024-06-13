@@ -1,5 +1,6 @@
-# Rebuttasl
-The training and inference codes of LatentHSI.
+# Rebuttal
+We provide:
+The simplified training and inference codes of LatentHSI.
 The comparison between LatentHSI, PLRDiff and HIRDiff.
 
 ## 1 LatentHSI
