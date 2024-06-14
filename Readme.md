@@ -121,6 +121,8 @@ We conduct the reverse sampling process in the latent space, and use a final cor
 ``` python
 # self here refers to the diffusion model, coder refers to the VAE 
 from sampling_utils import loss_tv
+import torch 
+import torch.nn.functional as nF 
 
 def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_timesteps,D_func,eta1,eta2):
     # s: number of used bands
@@ -139,7 +141,7 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
         E=get_E(degraded_HSI,s) 
 		#sampling starts
         for time, time_next in time_pairs:
-            if time_next < 0 :
+            if time_next < 0 : # time_next < 0 means that we already get z_0
                 Pa=para(nn.Parameter(z.requires_grad_(True)))
                 optimizer=torch.optim.Adam(Pa.parameters(),lr=0.2)
                 # final correction with Adam, to make the sampling more stable
@@ -165,23 +167,19 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
                 alpha_next = self.alphas_cumprod[time_next]
 
                 #sigma = eta * ((1 - alpha / alpha_next) * (1 - alpha_next) / (1 - alpha)).sqrt()
-                sigma=0
                 c = (1 - alpha_next - sigma ** 2).sqrt()
-                noise = torch.randn_like(img)
-                z = z_start * alpha_next.sqrt() + c * pred_noise + sigma * noise
-            
-            img=img.requires_grad_(True)
-            estimation=coder.decode(img)
-            estimation=res_from_E(estimation,E)
+                
+            z_start=z_start.requires_grad_(True)
+            estimation=coder.decode(z_start) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
+            estimation=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
             loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
             loss2=loss_tv(estimation)
             loss=eta1*loss1+eta2*loss2
             grad=torch.autograd.grad(loss,img)[0]
             with torch.no_grad():
-                img-=grad
+                z_start-=grad
             
-        return img
-    
+            z = z_start * alpha_next.sqrt() + c * pred_noise # get z_t from z_0 and \epsilon_{\theta}    
  # utils 
 def res_from_E(img,E):
     # the shape of img should be B,rank,H,W
