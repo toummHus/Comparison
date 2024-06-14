@@ -212,7 +212,7 @@ class para(nn.Module):
 
 ### 2.1 Training
 
-PLRDiff uses a pre-trained Diffusion Model, addtional training can lead to a decrease in performance. So it is not trainable.
+PLRDiff uses a pretrained Diffusion Model, addtional training on the pretrained model can lead to a decrease in performance. So it is not trainable.
 
 ### 2.2 Inference
 
@@ -263,7 +263,7 @@ for i in timesteps:
 
 ### 3.1 Training
 
-HIRDiff uses the same pre-trained Diffusion Model as PLRDiff and is not trainable.
+HIRDiff uses the same pretrained Diffusion Model as PLRDiff and is not trainable.
 
 ### 3.2 Inference
 
