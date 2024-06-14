@@ -183,9 +183,10 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
             with torch.no_grad():
                 z_start-=grad
             
-            z = z_start * alpha_next.sqrt() + c * pred_noise # get z_t from z_0 and \epsilon_{\theta}    
+            z = z_start * alpha_next.sqrt() + c * pred_noise # get z_{t-1} from z_0 and \epsilon_{\theta}    
  # utils 
 def res_from_E(img,E):
+    # return img \otimes E 
     # the shape of img should be B,rank,H,W
     # E:B,C,rank
     # Return:B,C,H,W 
