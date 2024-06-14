@@ -131,60 +131,62 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
     # s: number of used bands
     # D_func degradation function. For denoising is Identity mapping, for SR is downsampling.
     # correction times: The number of times z is updated with Adam
-        print("sample with ddim...")
-        # initial value, get z_T from standard Gaussian Distribution
-        z = torch.randn(batch_size, self.c, self.h, self.w) 
-        
-        if sampling_timesteps is None:
-            sampling_timesteps = self.num_timesteps
-        # get time steps
-        times = torch.linspace(-1, self.num_timesteps - 1, steps = sampling_timesteps + 1)   # [-1, 0, 1, 2, ..., T-1] when sampling_timesteps == total_timesteps
-        times = list(reversed(times.int().tolist()))
-        time_pairs = list(zip(times[:-1], times[1:]))
-        # We get E directly
-        E=get_E(degraded_HSI,s) 
-        # sampling starts
-        for time, time_next in time_pairs:
-            if time_next < 0 : # time_next < 0 means that we already get z_0
-                Pa=para(nn.Parameter(z.requires_grad_(True)))
-                optimizer=torch.optim.Adam(Pa.parameters(),lr=0.2)
-                # final correction with Adam, to make the sampling more stable
-                for _ in range(correction_times):
-                    estimation=coder.decode(Pa.z)
-                    estimation=res_from_E(estimation,E)
-                    loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
-                    loss2=loss_tv(estimation)
-                    loss=eta1*loss1+eta2*loss2
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
-                answer_reduced=coder.decode(Pa.z) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
-                answer_HSI=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
-                return answer_HSI
-        
-            with torch.no_grad():
-                # DDIM sampling 
-                time_cond = torch.full((batch_size,), time, device = device, dtype = torch.long)
-                pred_noise, z_start = self.model_predictions(z, time_cond)
-                z_start = self.predict_start_from_noise(z, time_cond, pred_noise)
-                alpha = self.alphas_cumprod[time]
-                alpha_next = self.alphas_cumprod[time_next]
+	print("sample with ddim...")
+	# initial value, get z_T from standard Gaussian Distribution
+	z = torch.randn(batch_size, self.c, self.h, self.w) 
+	
+	if sampling_timesteps is None:
+	    sampling_timesteps = self.num_timesteps
+	# get time steps
+	times = torch.linspace(-1, self.num_timesteps - 1, steps = sampling_timesteps + 1)   # [-1, 0, 1, 2, ..., T-1] when sampling_timesteps == total_timesteps
+	times = list(reversed(times.int().tolist()))
+	time_pairs = list(zip(times[:-1], times[1:]))
+	# We get E directly
+	E=get_E(degraded_HSI,s) 
+	# sampling starts
+	for time, time_next in time_pairs:
+	    if time_next < 0 : # time_next < 0 means that we already get z_0
+		Pa=para(nn.Parameter(z.requires_grad_(True)))
+		optimizer=torch.optim.Adam(Pa.parameters(),lr=0.2)
+		# final correction with Adam, to make the sampling more stable
+		for _ in range(correction_times):
+		    estimation=coder.decode(Pa.z)
+		    estimation=res_from_E(estimation,E)
+		    loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
+		    loss2=loss_tv(estimation)
+		    loss=eta1*loss1+eta2*loss2
+		    optimizer.zero_grad()
+		    loss.backward()
+		    optimizer.step()
+		answer_reduced=coder.decode(Pa.z) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
+		answer_HSI=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
+		return answer_HSI
+	
+	    with torch.no_grad():
+		# DDIM sampling 
+		time_cond = torch.full((batch_size,), time, device = device, dtype = torch.long)
+		pred_noise, z_start = self.model_predictions(z, time_cond)
+		z_start = self.predict_start_from_noise(z, time_cond, pred_noise)
+		alpha = self.alphas_cumprod[time]
+		alpha_next = self.alphas_cumprod[time_next]
+	
+		#sigma = eta * ((1 - alpha / alpha_next) * (1 - alpha_next) / (1 - alpha)).sqrt()
+		c = (1 - alpha_next - sigma ** 2).sqrt()
+	
+	    # Update  
+	    z_start=z_start.requires_grad_(True)
+	    estimation=coder.decode(z_start) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
+	    estimation=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
+	    loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
+	    loss2=loss_tv(estimation)
+	    loss=eta1*loss1+eta2*loss2
+	    grad=torch.autograd.grad(loss,img)[0]
+	    with torch.no_grad():
+		z_start-=grad
+	    
+	    z = z_start * alpha_next.sqrt() + c * pred_noise # get z_{t-1} from z_0 and \epsilon_{\theta}    
 
-                #sigma = eta * ((1 - alpha / alpha_next) * (1 - alpha_next) / (1 - alpha)).sqrt()
-                c = (1 - alpha_next - sigma ** 2).sqrt()
 
-            # Update  
-            z_start=z_start.requires_grad_(True)
-            estimation=coder.decode(z_start) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
-            estimation=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
-            loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
-            loss2=loss_tv(estimation)
-            loss=eta1*loss1+eta2*loss2
-            grad=torch.autograd.grad(loss,img)[0]
-            with torch.no_grad():
-                z_start-=grad
-            
-            z = z_start * alpha_next.sqrt() + c * pred_noise # get z_{t-1} from z_0 and \epsilon_{\theta}    
  # utils 
 def res_from_E(img,E):
     # return img \otimes E 
