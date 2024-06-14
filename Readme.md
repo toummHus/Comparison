@@ -54,9 +54,9 @@ for epoch in range(epochs):
    
 ```
 
-#### 1.1.3 Training of Diffuion Model (Unet)
+#### 1.1.3 Training of Diffuion Model (UNet)
 
-We only use clean HSIs to train the Unet. 
+We only use clean HSIs to train the UNet. 
 
 ``` python
 # simplified training code of Diffusion Model
@@ -66,7 +66,7 @@ def get_losses(diffusion, z0):
     t = torch.randint(0, diffusion.num_timesteps, (z0.shape[0],))
     noise = torch.randn_like(z0)
     zt = perturb_x(z0, t, noise)
-    estimated_noise = diffusion.Unet(zt, t)
+    estimated_noise = diffusion.UNet(zt, t)
     loss = F.mse_loss(estimated_noise, noise)
     return loss
 
@@ -212,7 +212,7 @@ class para(nn.Module):
 
 ### 2.1 Training
 
-PLRDiff uses a pre-trained Diffusion Model and is not trainable.
+PLRDiff uses a pre-trained Diffusion Model, addtional training can lead to a decrease in performance. So it is not trainable.
 
 ### 2.2 Inference
 
@@ -263,7 +263,7 @@ for i in timesteps:
 
 ### 3.1 Training
 
-PLRDiff uses the same pre-trained Diffusion Model  as PLRDiff and is not trainable.
+HIRDiff uses the same pre-trained Diffusion Model as PLRDiff and is not trainable.
 
 ### 3.2 Inference
 
@@ -277,9 +277,6 @@ if not opt['no_rrqr']:
         eng.cd(r'matlab')
         res = eng.sRRQR_rank(E[0].cpu().numpy().T, 1.2, 3, nargout=3)
         param['Band'] = torch.Tensor(np.sort(list(res[-1][0][:3]))).type(torch.int).to(device)-1
-
-    else:
-        param['Band'] = torch.Tensor([Ch * i // (K * Rr + 1) for i in range(1, K * Rr + 1)]).type(torch.int).to(device)
 ```
 #### 3.2.2 Restoration Process
 
