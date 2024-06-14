@@ -157,9 +157,9 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-                estimation=coder.decode(Pa.z)
-                estimation=res_from_E(estimation,E)
-                return estimation
+                answer_reduced=coder.decode(Pa.z) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
+                answer_HSI=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
+                return answer_HSI
         
             with torch.no_grad():
                 # DDIM sampling 
