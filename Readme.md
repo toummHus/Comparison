@@ -50,7 +50,7 @@ for epoch in range(epochs):
         loss,rec_loss=training_step(VAE,Reduced)
         optimizer.zero_grad()
         loss.backward()
-
+	optimizer.step()
    
 ```
 
