@@ -1,4 +1,4 @@
-# Rebuttal
+# Codes for Rebuttal of paper 1972
 We provide:
 The simplified training and inference codes of LatentHSI.
 The comparison between LatentHSI, PLRDiff and HIRDiff.
