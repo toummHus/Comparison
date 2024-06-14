@@ -106,7 +106,8 @@ def get_E(img,s):
     B,C,H,W=img.shape
     idxs=get_idxs(C,s).to(device)
     bimg = torch.index_select(img, 1, idxs).reshape(B, rank, -1)
-    # estimate coefficient matrix E by solving least square problem, the same as PLRDiff. The least square problem has an explicit solution, so we don't need update iterations.
+    # estimate coefficient matrix E by solving least square problem, the same as PLRDiff.
+    # The least square problem has an explicit solution, so we don't need update iterations.
     t1 = torch.matmul(bimg, bimg.transpose(1,2)) + 1e-4*torch.eye(rank,device=device).type(bimg.dtype) # For numerical stability, ensuring t1 is invertible.
 
     t2 = torch.matmul(img.reshape(B, C, -1), bimg.transpose(1,2))
