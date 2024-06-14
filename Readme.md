@@ -125,11 +125,14 @@ import torch
 import torch.nn.functional as nF 
 
 def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_timesteps,D_func,eta1,eta2):
+    # self: the Diffusoin Model
+    # coder: the Variational Autoencoder 
     # s: number of used bands
     # D_func degradation function. For denoising is Identity mapping, for SR is downsampling.
+    # correction times: The number of times z is updated with Adam
         print("sample with ddim...")
-		# initial value
-        z = torch.randn(batch_size, self.c, self.h, self.w)
+        # initial value, get z_T from standard Gaussian Distribution
+        z = torch.randn(batch_size, self.c, self.h, self.w) 
         
         if sampling_timesteps is None:
             sampling_timesteps = self.num_timesteps
@@ -139,7 +142,7 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
         time_pairs = list(zip(times[:-1], times[1:]))
         # We get E directly
         E=get_E(degraded_HSI,s) 
-		#sampling starts
+        # sampling starts
         for time, time_next in time_pairs:
             if time_next < 0 : # time_next < 0 means that we already get z_0
                 Pa=para(nn.Parameter(z.requires_grad_(True)))
@@ -168,7 +171,8 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
 
                 #sigma = eta * ((1 - alpha / alpha_next) * (1 - alpha_next) / (1 - alpha)).sqrt()
                 c = (1 - alpha_next - sigma ** 2).sqrt()
-                
+
+            # Update  
             z_start=z_start.requires_grad_(True)
             estimation=coder.decode(z_start) # \hat{\mathcal{A}} = Decoder(\hat{z_0})
             estimation=res_from_E(estimation,E) # \hat{\mathcal{X}} = \hat{\mathcal{A}} \otimes E
