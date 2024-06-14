@@ -76,7 +76,7 @@ for ep in range(epochs):
         Channels=clean_HSI.shape[1]
         idxs=get_idxs(Channels,s)
         reduced_HSI=clean_HSI[:,idxs,:,:]
-        latent_representation=VAE.encode(reduced_HSI) #z0 [b,c,h,w]
+        latent_representation=VAE.encode(reduced_HSI) #z0 = Encoder(\mathcal{A}) [b,c,h,w]
         ### our diffusion model is trained in the latent space
         loss = get_losses(diffusion,latent_representation)
         optimizer.zero_grad()
