@@ -45,7 +45,7 @@ for epoch in range(epochs):
 
     for clean_HSI in dataloader:
     	Channels=clean_HSI.shape[1]
-		idxs=get_idxs(Channels,s)
+        idxs=get_idxs(Channels,s)
         reduced_HSI=clean_HSI[:,idxs,:,:] #we get the reduced HSI via bands selection from clean HSI
         loss,rec_loss=training_step(VAE,reduced_HSI)
         optimizer.zero_grad()
