@@ -16,8 +16,8 @@ def get_idxs(Channels,s):
     idxs=torch.linspace(0,Channels-1,s)
     idxs=torch.round(idxs).to(torch.int32)
     return idxs
-    # get_idxs(128,8)
-    # return tensor([  0,  18,  36,  54,  73,  91, 109, 127], dtype=torch.int32)
+    # example: print(get_idxs(128,8))
+    # tensor([  0,  18,  36,  54,  73,  91, 109, 127], dtype=torch.int32)
 ```
 
 #### 1.1.2 Training of VAE
@@ -124,7 +124,7 @@ def get_E(img,s):
     B,C,H,W=img.shape
     idxs=get_idxs(C,s).to(device)
     bimg = img[:,idxs,:,:].reshape(B, s, -1) 
-    # estimate coefficient matrix E by solving least square problem, the same as PLRDiff.
+    # estimate coefficient matrix E by solving least square problem.
     # The least square problem has an explicit solution, so we don't need update iterations.
     t1 = torch.matmul(bimg, bimg.transpose(1,2)) + 1e-4*torch.eye(s,device=device).type(bimg.dtype) # For numerical stability, ensuring t1 is invertible.
 
