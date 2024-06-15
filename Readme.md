@@ -170,6 +170,7 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
             for _ in range(correction_times):
                 estimation=coder.decode(Pa.z)
                 estimation=res_from_E(estimation,E)
+		# Eq.(24) in the main paper, cauculate the gradient
                 loss1=nF.mse_loss(D_func(estimation),degraded_HSI)
                 loss2=loss_tv(estimation)
                 loss=eta1*loss1+eta2*loss2
