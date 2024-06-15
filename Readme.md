@@ -209,12 +209,12 @@ def sample_ddim(self,batch_size,s,coder,degraded_HSI,correction_times,sampling_t
  # utils 
 def res_from_E(img,E):
     # return img \otimes E 
-    # the shape of img should be B,rank,H,W
-    # E:B,C,rank
+    # the shape of img should be B,s,H,W
+    # E:B,C,s
     # Return:B,C,H,W 
-    B,rank,H,W=img.shape
-    B,C,rank=E.shape
-    img=img.reshape(B,rank,-1)
+    B,s,H,W=img.shape
+    B,C,s=E.shape
+    img=img.reshape(B,s,-1)
     img=E@img 
     img=img.reshape(B,C,H,W)
     return img 
