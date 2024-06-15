@@ -254,7 +254,7 @@ for i in timesteps:
     t = torch.tensor(i * shape[0], device=device)
     # re-instantiate requires_grad for backpropagation
     img = img.requires_grad_()
-    # Algorithm 1 line 2: sample A_{t-1} from p(A_{t-1}|A_t)
+    # sample A_{t-1} from p(A_{t-1}|A_t)
     out = self.ddpm_sample(
             model,
             img,
@@ -269,10 +269,10 @@ for i in timesteps:
     norm1 = torch.norm(LRHS - xhat_3) # ||Y - D(B(Ax_3 E + R))||
     xhat_4 = torch.matmul((xhat_1).permute(0,2,3,1), param["PH"]).permute(0,3,1,2) # \hat{X}_3 r
     norm2 = torch.norm(PAN - xhat_4) # ||P - \hat{X}_3 r||
-    # Algorithm 1 line 4
+    # get the gradient
     likelihood = norm1 + (param['eta2']/param['eta1'])*norm2
     norm_gradX = grad(outputs=likelihood, inputs=img)[0] 
-    # Algorithm 1 line 5, Gradient Descent
+    # Gradient Descent
     out["sample"] = out["sample"] - param['eta1']*norm_gradX 
 
     yield out, E, add_res
