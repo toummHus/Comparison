@@ -291,7 +291,7 @@ HIRDiff uses the same pretrained Diffusion Model as PLRDiff and is not trainable
 
 #### 3.2.1 Bands selection
 
-HIRDiff uses a RRQR algorithm to choose 3 bands, which is essentially the same as PLRDiff. It only uses the information of 3 bands.
+HIRDiff utilizes a RRQR algorithm for band selection, which, in essence, is equivalent to the approach taken by PLRDiff. It only uses the information of 3 bands.
 ```python
 if not opt['no_rrqr']:
         import matlab.engine
@@ -334,7 +334,8 @@ for iteration, (i, j) in pbar: # this means the time steps
         xt_next = alphas_bar_next.sqrt() * pred_xstart + c1 * torch.randn_like(x) + c2 * model_output
 
         param['iteration'] = iteration
-        if param['task'] == 'sr': # the TV Regularization is contained in these loss functions
+	# calculate loss
+        if param['task'] == 'sr': 
             loss_condition = self.loss_sr(param, model_condition, xhat)
         elif param['task'] == 'denoise':
             loss_condition = self.loss_denoise(param, model_condition, xhat)
